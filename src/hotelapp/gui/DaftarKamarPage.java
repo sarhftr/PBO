@@ -1,12 +1,11 @@
 package hotelapp.gui;
 
-import javax.swing.*;
-import javax.swing.border.*;
-import java.awt.*;
-import java.awt.event.*;
 import hotelapp.model.*;
 import hotelapp.service.DataManager;
-import java.util.List;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.border.*;
 
 public class DaftarKamarPage extends JFrame {
 
@@ -14,11 +13,11 @@ public class DaftarKamarPage extends JFrame {
     private Tamu tamu;
     private JPanel grid;
 
-    // ==== COLOR PALETTE YANG SAMA DENGAN BookingPage ====
-    private final Color cream = new Color(245,238,220);
-    private final Color navy = new Color(39,76,119);
-    private final Color darkRed = new Color(62,50,50);
-    private final Color brown = new Color(126,99,99);
+    // ==== SAMAKAN PALETTE DENGAN BookingPage ====
+    private final Color hoverColor = Color.decode("#3E3232");  // c1
+    private final Color btnColor = Color.decode("#503C3C");    // c2
+    private final Color borderColor = Color.decode("#7E6363"); // c3
+    private final Color bgColor = Color.decode("#EEE4E1");     // bg
 
     public DaftarKamarPage(DashboardTamu parent, Tamu tamu){
         this.parent = parent;
@@ -38,9 +37,9 @@ public class DaftarKamarPage extends JFrame {
     private void init(){
         setLayout(new BorderLayout());
 
-        // ================= HEADER (SAMA SEPERTI BOOKINGPAGE) =================
+        // ================= HEADER =================
         JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(darkRed);
+        header.setBackground(btnColor);
         header.setPreferredSize(new Dimension(getWidth(), 56));
         header.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
 
@@ -53,11 +52,11 @@ public class DaftarKamarPage extends JFrame {
 
         // ================= BODY =================
         JPanel body = new JPanel(new BorderLayout());
-        body.setBackground(cream);
-        body.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        body.setBackground(bgColor);
+        body.setBorder(BorderFactory.createEmptyBorder(12,12,12,12));
 
-        grid = new JPanel(new GridLayout(0, 2, 12, 12));
-        grid.setBackground(cream);
+        grid = new JPanel(new GridLayout(0,2,12,12));
+        grid.setBackground(bgColor);
 
         JScrollPane sp = new JScrollPane(grid);
         sp.setBorder(null);
@@ -68,14 +67,13 @@ public class DaftarKamarPage extends JFrame {
 
         // ================= FOOTER =================
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        footer.setBackground(cream);
+        footer.setBackground(bgColor);
 
         RoundedButton btnBack = new RoundedButton("KEMBALI");
-        btnBack.setPreferredSize(new Dimension(120, 38));
-        btnBack.setBackground(navy);
+        btnBack.setPreferredSize(new Dimension(120,38));
+        btnBack.setBackground(btnColor);
         btnBack.setForeground(Color.WHITE);
-        btnBack.setFont(new Font("Poppins", Font.BOLD, 12));
-        btnBack.addMouseListener(new HoverEffect(btnBack, navy));
+        btnBack.addMouseListener(new HoverEffect(btnBack, hoverColor));
         btnBack.addActionListener(e -> dispose());
 
         footer.add(btnBack);
@@ -97,8 +95,8 @@ public class DaftarKamarPage extends JFrame {
         JPanel c = new JPanel(new BorderLayout());
         c.setBackground(Color.WHITE);
         c.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(220,220,220), 1, true),
-                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+                new LineBorder(borderColor, 1, true),
+                BorderFactory.createEmptyBorder(10,10,10,10)
         ));
 
         // ===== Nama, harga, status =====
@@ -112,7 +110,7 @@ public class DaftarKamarPage extends JFrame {
         status.setFont(new Font("Poppins", Font.BOLD, 12));
         status.setForeground(k.isTersedia() ? new Color(34,139,34) : Color.RED);
 
-        JPanel info = new JPanel(new GridLayout(0, 1));
+        JPanel info = new JPanel(new GridLayout(0,1));
         info.setOpaque(false);
         info.add(name);
         info.add(price);
@@ -124,9 +122,9 @@ public class DaftarKamarPage extends JFrame {
         c.addMouseListener(new MouseAdapter(){
             @Override public void mouseClicked(MouseEvent e){
                 String txt = 
-                    k.getNomor() + " - " + k.getTipe() +
-                    "\nHarga: Rp " + String.format("%.0f", k.getHarga()) +
-                    "\nStatus: " + (k.isTersedia() ? "AVAILABLE" : "NOT AVAILABLE");
+                        k.getNomor() + " - " + k.getTipe() +
+                        "\nHarga: Rp " + String.format("%.0f", k.getHarga()) +
+                        "\nStatus: " + (k.isTersedia() ? "AVAILABLE" : "NOT AVAILABLE");
 
                 int x = JOptionPane.showOptionDialog(
                         DaftarKamarPage.this,
@@ -148,22 +146,30 @@ public class DaftarKamarPage extends JFrame {
         return c;
     }
 
-    // ================= BUTTON STYLES (SAMA DENGAN BOOKINGPAGE) =================
+    // ================= BUTTON STYLES =================
     class RoundedButton extends JButton {
+        private int radius = 25;
         RoundedButton(String text){
             super(text);
             setFocusPainted(false);
             setContentAreaFilled(false);
             setBorderPainted(false);
-            setOpaque(true);
+            setOpaque(false);
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            setFont(new Font("Poppins", Font.BOLD, 12));
         }
-        @Override protected void paintComponent(Graphics g){
+        @Override
+        protected void paintComponent(Graphics g){
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(getBackground());
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
-            super.paintComponent(g2);
+            g2.setColor(getModel().isPressed() ? getBackground().darker() : getBackground());
+            g2.fillRoundRect(0,0,getWidth(),getHeight(),radius,radius);
+            FontMetrics fm = g2.getFontMetrics();
+            String text = getText();
+            int x = (getWidth() - fm.stringWidth(text))/2;
+            int y = (getHeight() - fm.getHeight())/2 + fm.getAscent();
+            g2.setColor(getForeground());
+            g2.drawString(text,x,y);
             g2.dispose();
         }
     }
@@ -173,6 +179,6 @@ public class DaftarKamarPage extends JFrame {
         private Color base;
         HoverEffect(JButton b, Color c){ btn = b; base = c; }
         @Override public void mouseEntered(MouseEvent e){ btn.setBackground(base.darker()); }
-        @Override public void mouseExited (MouseEvent e){ btn.setBackground(base); }
+        @Override public void mouseExited(MouseEvent e){ btn.setBackground(base); }
     }
 }

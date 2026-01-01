@@ -18,11 +18,11 @@ public class BookingForm extends JFrame {
     private JComboBox<Kamar> kamarBox;
     private JXDatePicker checkInPicker, checkOutPicker;
 
-    // === Color Palette sama seperti BookingPage ===
-    private final Color cream = new Color(245,238,220);
-    private final Color navy = new Color(39,76,119);
-    private final Color darkRed = new Color(62,50,50);
-    private final Color brown = new Color(126,99,99);
+    // ===== Samakan palette dengan DashboardTamu =====
+    private final Color hoverColor = Color.decode("#3E3232"); // c1
+    private final Color btnColor = Color.decode("#503C3C");   // c2
+    private final Color borderColor = Color.decode("#7E6363"); // c3
+    private final Color bgColor = Color.decode("#EEE4E1");    // bg
 
     public BookingForm(Tamu tamu, DashboardTamu parent){
         this.tamu = tamu;
@@ -40,13 +40,13 @@ public class BookingForm extends JFrame {
     private void init(){
 
         JPanel body = new JPanel();
-        body.setBackground(cream);
+        body.setBackground(bgColor);
         body.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
 
         JLabel title = new JLabel("Form Booking Kamar");
         title.setFont(new Font("Poppins", Font.BOLD, 20));
-        title.setForeground(darkRed);
+        title.setForeground(borderColor.darker());
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         body.add(title);
@@ -70,28 +70,31 @@ public class BookingForm extends JFrame {
         body.add(createField("Tanggal Check-in:", checkInPicker));
         body.add(createField("Tanggal Check-out:", checkOutPicker));
 
-        JButton btnBook = new JButton("Booking Sekarang");
-        styleButton(btnBook);
+        RoundedButton btnBook = new RoundedButton("Booking Sekarang");
+        btnBook.setPreferredSize(new Dimension(160,38));
         btnBook.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnBook.setBackground(btnColor);
+        btnBook.setForeground(Color.WHITE);
+        // pakai HoverEffect static dari DashboardTamu
+        btnBook.addMouseListener(new DashboardTamu.HoverEffect(btnBook, hoverColor));
+
         body.add(Box.createVerticalStrut(10));
         body.add(btnBook);
 
-        // Tambah scroll
         JScrollPane sp = new JScrollPane(body);
         sp.setBorder(null);
         add(sp);
 
-        // Action
         btnBook.addActionListener(e -> prosesBooking());
     }
 
     private JPanel createField(String label, JComponent comp){
         JPanel p = new JPanel(new BorderLayout(5,5));
-        p.setBackground(cream);
+        p.setBackground(bgColor);
 
         JLabel lbl = new JLabel(label);
         lbl.setFont(new Font("Poppins", Font.PLAIN, 14));
-        lbl.setForeground(Color.DARK_GRAY);
+        lbl.setForeground(borderColor.darker());
 
         p.add(lbl, BorderLayout.NORTH);
         p.add(comp, BorderLayout.CENTER);
@@ -104,7 +107,7 @@ public class BookingForm extends JFrame {
         box.setFont(new Font("Poppins", Font.PLAIN, 14));
         box.setBackground(Color.WHITE);
         box.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(brown, 1, true),
+                BorderFactory.createLineBorder(borderColor, 1, true),
                 BorderFactory.createEmptyBorder(4,6,4,6)
         ));
     }
@@ -112,24 +115,10 @@ public class BookingForm extends JFrame {
     private void styleDatePicker(JXDatePicker dp){
         dp.getEditor().setFont(new Font("Poppins", Font.PLAIN, 14));
         dp.getEditor().setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(brown, 1, true),
+                BorderFactory.createLineBorder(borderColor, 1, true),
                 BorderFactory.createEmptyBorder(4,6,4,6)
         ));
         dp.setBackground(Color.WHITE);
-    }
-
-    private void styleButton(JButton b){
-        b.setFont(new Font("Poppins", Font.BOLD, 14));
-        b.setBackground(navy);
-        b.setForeground(Color.WHITE);
-        b.setFocusPainted(false);
-        b.setBorder(BorderFactory.createEmptyBorder(8,16,8,16));
-        b.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        b.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) { b.setBackground(navy.darker()); }
-            public void mouseExited(java.awt.event.MouseEvent evt) { b.setBackground(navy); }
-        });
     }
 
     private void prosesBooking(){
@@ -157,5 +146,33 @@ public class BookingForm extends JFrame {
 
         ModernDialog.show(this, "Booking berhasil!\nID Booking: " + id);
         dispose();
+    }
+
+    // ===== RoundedButton =====
+    class RoundedButton extends JButton {
+        private int radius = 25;
+        public RoundedButton(String text){
+            super(text);
+            setFocusPainted(false);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setOpaque(false);
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+            setFont(new Font("Poppins", Font.BOLD, 14));
+        }
+        @Override
+        protected void paintComponent(Graphics g){
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(getModel().isPressed() ? getBackground().darker() : getBackground());
+            g2.fillRoundRect(0,0,getWidth(),getHeight(),radius,radius);
+            FontMetrics fm = g2.getFontMetrics();
+            String text = getText();
+            int x = (getWidth() - fm.stringWidth(text)) / 2;
+            int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
+            g2.setColor(getForeground());
+            g2.drawString(text, x, y);
+            g2.dispose();
+        }
     }
 }

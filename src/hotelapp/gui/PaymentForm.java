@@ -1,16 +1,21 @@
 package hotelapp.gui;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import hotelapp.gui.components.ModernDialog;
 import hotelapp.model.*;
 import hotelapp.service.DataManager;
-import hotelapp.gui.components.ModernDialog;
+import java.awt.*;
+import javax.swing.*;
 
 public class PaymentForm extends JFrame {
 
     private Booking booking;
     private DashboardTamu parent;
+
+    // ===== color palette konsisten dengan DashboardTamu =====
+    private final Color hoverColor = Color.decode("#3E3232"); // c1
+    private final Color btnColor = Color.decode("#503C3C");   // c2
+    private final Color borderColor = Color.decode("#7E6363"); // c3
+    private final Color bgColor = Color.decode("#EEE4E1");    // bg
 
     public PaymentForm(Booking booking, DashboardTamu parent){
         this.booking = booking;
@@ -24,20 +29,18 @@ public class PaymentForm extends JFrame {
     }
 
     private void init(){
-        Color cream = new Color(245,238,220);
-        Color blue = new Color(39,76,119);
 
         JPanel panel = new JPanel(null);
-        panel.setBackground(cream);
+        panel.setBackground(bgColor);
 
         JLabel title = new JLabel("PAYMENT - HOTEL SARIZ");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        title.setForeground(blue);
+        title.setFont(new Font("Poppins", Font.BOLD, 20));
+        title.setForeground(btnColor);
         title.setBounds(30,15,300,30);
         panel.add(title);
 
         JLabel lblTotal = new JLabel("Total : Rp " + String.format("%.0f", booking.getTotalHarga()));
-        lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblTotal.setFont(new Font("Poppins", Font.BOLD, 14));
         lblTotal.setBounds(30,60,300,25);
         panel.add(lblTotal);
 
@@ -45,15 +48,20 @@ public class PaymentForm extends JFrame {
         JLabel lblBayar = new JLabel("Jumlah Bayar");
         JLabel lblKembali = new JLabel("Kembalian : Rp 0");
 
+        lblMetode.setFont(new Font("Poppins", Font.PLAIN, 13));
+        lblBayar.setFont(new Font("Poppins", Font.PLAIN, 13));
+        lblKembali.setFont(new Font("Poppins", Font.BOLD, 13));
+
         lblMetode.setBounds(30,100,150,20);
         lblBayar.setBounds(30,150,150,20);
         lblKembali.setBounds(30,260,300,25);
-        lblKembali.setFont(new Font("Segoe UI", Font.BOLD, 13));
 
         JComboBox<String> metodeBox = new JComboBox<>(new String[]{"Cash","Transfer"});
+        metodeBox.setFont(new Font("Poppins", Font.PLAIN, 13));
         metodeBox.setBounds(190,95,200,30);
 
         RoundedTextField txtBayar = new RoundedTextField();
+        txtBayar.setFont(new Font("Poppins", Font.PLAIN, 13));
         txtBayar.setBounds(190,145,200,30);
 
         panel.add(lblMetode);
@@ -64,9 +72,9 @@ public class PaymentForm extends JFrame {
 
         RoundedButton btnBayar = new RoundedButton("PROSES PEMBAYARAN");
         btnBayar.setBounds(30,210,360,40);
-        btnBayar.setBackground(blue);
+        btnBayar.setBackground(btnColor);
         btnBayar.setForeground(Color.WHITE);
-        btnBayar.addMouseListener(new HoverEffect(btnBayar,blue));
+        btnBayar.addMouseListener(new DashboardTamu.HoverEffect(btnBayar, btnColor));
         panel.add(btnBayar);
 
         btnBayar.addActionListener(e -> {
@@ -108,7 +116,8 @@ public class PaymentForm extends JFrame {
             setFocusPainted(false);
             setContentAreaFilled(false);
             setBorderPainted(false);
-            setFont(new Font("Segoe UI", Font.BOLD, 13));
+            setFont(new Font("Poppins", Font.BOLD, 13));
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
 
         protected void paintComponent(Graphics g){
@@ -125,7 +134,6 @@ public class PaymentForm extends JFrame {
         RoundedTextField(){
             setBorder(null);
             setOpaque(false);
-            setFont(new Font("Segoe UI", Font.PLAIN, 13));
         }
         protected void paintComponent(Graphics g){
             Graphics2D g2=(Graphics2D)g;
@@ -136,20 +144,8 @@ public class PaymentForm extends JFrame {
         }
         protected void paintBorder(Graphics g){
             Graphics2D g2=(Graphics2D)g;
-            g2.setColor(new Color(200,200,200));
+            g2.setColor(borderColor);
             g2.drawRoundRect(0,0,getWidth()-1,getHeight()-1,20,20);
         }
-    }
-
-    // ========== HOVER EFFECT ==========
-    class HoverEffect extends MouseAdapter{
-        JButton btn;
-        Color base;
-        HoverEffect(JButton btn,Color base){
-            this.btn=btn;
-            this.base=base;
-        }
-        public void mouseEntered(MouseEvent e){ btn.setBackground(base.darker()); }
-        public void mouseExited(MouseEvent e){ btn.setBackground(base); }
     }
 }

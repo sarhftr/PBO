@@ -1,177 +1,278 @@
 package hotelapp.gui;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
-import hotelapp.service.DataManager;
 import hotelapp.model.*;
-import hotelapp.gui.components.ModernDialog;
+import hotelapp.service.DataManager;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 public class DashboardAdmin extends JFrame {
 
-    private DefaultListModel<Tamu> modelTamu;
-    private DefaultListModel<Booking> modelBooking;
-    private DefaultListModel<String> modelActive;
+    // ===== COLOR PALETTE (sama dengan DashboardTamu) =====
+    private final Color c1 = Color.decode("#3E3232"); // hover
+    private final Color c2 = Color.decode("#503C3C"); // button
+    private final Color c3 = Color.decode("#7E6363"); // border
+    private final Color bg = Color.decode("#EEE4E1"); // background
 
-    public DashboardAdmin(){
+    private JPanel panelTamu;
+    private JPanel panelBooking;
+    private JPanel panelActive;
+
+    public DashboardAdmin() {
         setTitle("Hotel Sariz - Dashboard Admin");
-        setSize(1100,560);
+        setSize(1100, 560);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        init();
+        initUI();
         setVisible(true);
     }
 
-    private void init(){
-        Color cream = new Color(245,238,220);
-        Color blue = new Color(39,76,119);
-
-        JPanel panel = new JPanel(null);
-        panel.setBackground(cream);
+    private void initUI() {
+        JPanel root = new JPanel(null);
+        root.setBackground(bg);
 
         JLabel title = new JLabel("Dashboard Admin - HOTEL SARIZ");
-        title.setBounds(30,15,600,35);
-        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        title.setForeground(blue);
-        panel.add(title);
+        title.setBounds(30, 5, 600, 35);
+        title.setFont(new Font("Poppins", Font.BOLD,22));
+        title.setForeground(c2);
+        root.add(title);
 
-        // ===== JUDUL PANEL =====
-        JLabel lblTamu = new JLabel("DATA TAMU");
-        lblTamu.setBounds(30,45,300,20);
-        lblTamu.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblTamu.setForeground(blue);
+        // ===== TITLE PANEL =====
+        root.add(sectionTitle("DATA TAMU", 30));
+        root.add(sectionTitle("DATA BOOKING", 380));
+        root.add(sectionTitle("TAMU SEDANG CHECK-IN", 730));
 
-        JLabel lblBooking = new JLabel("DATA BOOKING");
-        lblBooking.setBounds(380,45,300,20);
-        lblBooking.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblBooking.setForeground(blue);
+        panelTamu    = createListPanel();
+        panelBooking = createListPanel();
+        panelActive  = createListPanel();
 
-        JLabel lblActive = new JLabel("TAMU SEDANG CHECK-IN");
-        lblActive.setBounds(730,45,300,20);
-        lblActive.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblActive.setForeground(blue);
+        root.add(scroll(panelTamu, 30));
+        root.add(scroll(panelBooking, 380));
+        root.add(scroll(panelActive, 730));
 
-        panel.add(lblTamu);
-        panel.add(lblBooking);
-        panel.add(lblActive);
-
-        modelTamu = new DefaultListModel<>();
-        modelBooking = new DefaultListModel<>();
-        modelActive = new DefaultListModel<>();
-
-        JList<Tamu> listTamu = new JList<>(modelTamu);
-        JList<Booking> listBooking = new JList<>(modelBooking);
-        JList<String> listActive = new JList<>(modelActive);
-
-        JScrollPane spT = new JScrollPane(listTamu);
-        JScrollPane spB = new JScrollPane(listBooking);
-        JScrollPane spA = new JScrollPane(listActive);
-
-        spT.setBounds(30,70,330,360);
-        spB.setBounds(380,70,330,360);
-        spA.setBounds(730,70,330,360);
-
-        panel.add(spT);
-        panel.add(spB);
-        panel.add(spA);
-
-        RoundedButton addBtn = new RoundedButton("TAMBAH TAMU");
-        RoundedButton delBtn = new RoundedButton("HAPUS");
-        RoundedButton manageBtn = new RoundedButton("MANAGE KAMAR");
-        RoundedButton saveBtn = new RoundedButton("SAVE");
+        // ===== BUTTONS =====
+        RoundedButton addBtn     = new RoundedButton("TAMBAH TAMU");
+        RoundedButton delBtn     = new RoundedButton("HAPUS");
+        RoundedButton manageBtn  = new RoundedButton("MANAGE KAMAR");
+        RoundedButton saveBtn    = new RoundedButton("SAVE");
         RoundedButton refreshBtn = new RoundedButton("REFRESH");
-        RoundedButton logoutBtn = new RoundedButton("LOGOUT");
+        RoundedButton logoutBtn  = new RoundedButton("LOGOUT");
 
-        RoundedButton[] btns = {addBtn,delBtn,manageBtn,saveBtn,refreshBtn,logoutBtn};
-        int x=30;
+        RoundedButton[] btns = { addBtn, delBtn, manageBtn, saveBtn, refreshBtn, logoutBtn };
 
-        for(RoundedButton b:btns){
-            b.setBounds(x,450,160,35);
-            b.setBackground(blue);
+        int x = 30;
+        for (RoundedButton b : btns) {
+            b.setBounds(x, 450, 160, 35);
+            b.setBackground(c2);
             b.setForeground(Color.WHITE);
-            panel.add(b);
-            x+=170;
-            b.addMouseListener(new HoverEffect(b,blue));
+            root.add(b);
+            b.addMouseListener(new DashboardTamu.HoverEffect(b, c1));
+            x += 170;
         }
 
-        addBtn.addActionListener(e -> {
-            String name=JOptionPane.showInputDialog(this,"Nama:");
-            String user=JOptionPane.showInputDialog(this,"Username:");
-            String pass=JOptionPane.showInputDialog(this,"Password:");
-            if(name!=null && user!=null && pass!=null){
-                DataManager.tamuList.add(new Tamu(DataManager.nextTamuId(),user,pass,name));
-                refreshAll();
-            }
+        // ===== ACTION =====
+        addBtn.addActionListener(e -> tambahTamu());
+        delBtn.addActionListener(e -> hapusTamu());
+        manageBtn.addActionListener(e -> new ManageKamarForm());
+        saveBtn.addActionListener(e -> DataManager.saveAll());
+        refreshBtn.addActionListener(e -> refreshAll());
+        logoutBtn.addActionListener(e -> {
+            dispose();
+            new LoginForm();
         });
 
-        delBtn.addActionListener(e->{
-            Tamu t=listTamu.getSelectedValue();
-            if(t!=null){ DataManager.tamuList.remove(t); refreshAll(); }
-        });
-
-        manageBtn.addActionListener(e-> new ManageKamarForm());
-
-        saveBtn.addActionListener(e->{
-            DataManager.saveAll();
-            ModernDialog.show(this,"Data tersimpan");
-        });
-
-        refreshBtn.addActionListener(e->refreshAll());
-        logoutBtn.addActionListener(e->{ dispose(); new LoginForm(); });
-
+        add(root);
         refreshAll();
-        add(panel);
     }
 
-    private void refreshAll(){
-        modelTamu.clear();
-        modelBooking.clear();
-        modelActive.clear();
+    // ================= PANEL & CARD =================
 
-        for(Tamu t:DataManager.tamuList) modelTamu.addElement(t);
-        for(Booking b:DataManager.bookingList) modelBooking.addElement(b);
+    private JLabel sectionTitle(String text, int x) {
+        JLabel l = new JLabel(text);
+        l.setBounds(x, 45, 300, 20);
+        l.setFont(new Font("Poppins", Font.BOLD,14));
+        l.setForeground(c2);
+        return l;
+    }
 
-        for(Booking b:DataManager.bookingList){
-            if(b.isCheckedIn() && !b.isCheckedOut()){
-                modelActive.addElement(
-                    b.getTamu().getName()+" | Kamar "+
-                    b.getKamar().getNomor()+" ("+b.getKamar().getTipe()+")"
-                );
+    private JPanel createListPanel() {
+        JPanel p = new JPanel();
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+        p.setBackground(bg);
+        return p;
+    }
+
+    private JScrollPane scroll(JPanel panel, int x) {
+        JScrollPane sp = new JScrollPane(panel);
+        sp.setBounds(x, 70, 330, 360);
+        sp.setBorder(null);
+        return sp;
+    }
+
+    private JPanel adminCard(String header, String status, Color statusColor, String... lines) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(c3, 2, true),
+                new EmptyBorder(10,10,10,10)
+        ));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel lblHeader = new JLabel(header);
+        lblHeader.setFont(new Font("Poppins", Font.BOLD,14));
+        lblHeader.setForeground(c2);
+
+        JLabel lblStatus = new JLabel(status);
+        lblStatus.setFont(new Font("Poppins", Font.BOLD,12));
+        lblStatus.setForeground(statusColor);
+
+        JPanel top = new JPanel(new BorderLayout());
+        top.setOpaque(false);
+        top.add(lblHeader, BorderLayout.WEST);
+        top.add(lblStatus, BorderLayout.EAST);
+
+        JPanel body = new JPanel();
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+        body.setOpaque(false);
+
+        for (String s : lines) {
+            JLabel l = new JLabel(s);
+            l.setFont(new Font("Poppins", Font.PLAIN,12));
+            l.setForeground(darkRed());
+            body.add(l);
+        }
+
+        card.add(top, BorderLayout.NORTH);
+        card.add(body, BorderLayout.CENTER);
+        return card;
+    }
+
+    private Color darkRed() {
+        return new Color(62,50,50);
+    }
+
+    // ================= DATA =================
+
+    private void refreshAll() {
+        panelTamu.removeAll();
+        panelBooking.removeAll();
+        panelActive.removeAll();
+
+        // DATA TAMU
+        for (Tamu t : DataManager.tamuList) {
+            panelTamu.add(adminCard(
+                    "ID : " + t.getId(),
+                    "",
+                    c3,
+                    "Nama : " + t.getName(),
+                    "Username : " + t.getUsername()
+            ));
+            panelTamu.add(Box.createVerticalStrut(8));
+        }
+
+        // DATA BOOKING
+        for (Booking b : DataManager.bookingList) {
+            String status;
+            Color color;
+
+            if (b.isCheckedOut()) {
+                status = "[CHECKED-OUT]";
+                color = Color.RED;
+            } else if (b.isCheckedIn()) {
+                status = "[CHECKED-IN]";
+                color = new Color(34,139,34);
+            } else {
+                status = "[PENDING]";
+                color = c3;
             }
+
+            panelBooking.add(adminCard(
+                    "ID Kamar : " + b.getKamar().getNomor(),
+                    status,
+                    color,
+                    "Nama : " + b.getTamu().getName(),
+                    b.getKamar().getTipe() + " | " +
+                            b.getCheckIn() + " - " + b.getCheckOut(),
+                    "Total : Rp " + String.format("%.0f", b.getTotalHarga())
+            ));
+            panelBooking.add(Box.createVerticalStrut(8));
+        }
+
+        // TAMU CHECK-IN
+        for (Booking b : DataManager.bookingList) {
+            if (b.isCheckedIn() && !b.isCheckedOut()) {
+                panelActive.add(adminCard(
+                        b.getTamu().getName(),
+                        "[CHECKED-IN]",
+                        new Color(34,139,34),
+                        "Kamar " + b.getKamar().getNomor(),
+                        b.getKamar().getTipe()
+                ));
+                panelActive.add(Box.createVerticalStrut(8));
+            }
+        }
+
+        revalidate();
+        repaint();
+    }
+
+    // ================= ACTION =================
+
+    private void tambahTamu() {
+        String nama = JOptionPane.showInputDialog(this, "Nama Tamu:");
+        String user = JOptionPane.showInputDialog(this, "Username:");
+        String pass = JOptionPane.showInputDialog(this, "Password:");
+
+        if (nama != null && user != null && pass != null) {
+            DataManager.tamuList.add(
+                    new Tamu(DataManager.nextTamuId(), user, pass, nama)
+            );
+            refreshAll();
         }
     }
 
-    // ================= CUSTOM BUTTON =================
+    private void hapusTamu() {
+        if (!DataManager.tamuList.isEmpty()) {
+            DataManager.tamuList.remove(DataManager.tamuList.size() - 1);
+            refreshAll();
+        }
+    }
+
+    // ================= BUTTON STYLE =================
 
     class RoundedButton extends JButton {
-        public RoundedButton(String text) {
+        RoundedButton(String text) {
             super(text);
             setFocusPainted(false);
             setContentAreaFilled(false);
             setBorderPainted(false);
-            setFont(new Font("Segoe UI", Font.BOLD, 13));
+            setFont(new Font("Poppins", Font.BOLD,14));
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
 
-        protected void paintComponent(Graphics g){
-            Graphics2D g2=(Graphics2D)g;
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(getBackground());
-            g2.fillRoundRect(0,0,getWidth(),getHeight(),25,25);
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 25, 25);
             super.paintComponent(g);
         }
     }
 
-    class HoverEffect extends MouseAdapter{
-        private JButton btn;
-        private Color base;
-        HoverEffect(JButton btn,Color base){
-            this.btn=btn;
-            this.base=base;
+    class HoverEffect extends MouseAdapter {
+        JButton btn;
+        Color base;
+        HoverEffect(JButton b, Color c) {
+            btn = b;
+            base = c;
         }
-        public void mouseEntered(MouseEvent e){
+        public void mouseEntered(MouseEvent e) {
             btn.setBackground(base.darker());
         }
-        public void mouseExited(MouseEvent e){
+        public void mouseExited(MouseEvent e) {
             btn.setBackground(base);
         }
     }

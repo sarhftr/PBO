@@ -1,26 +1,25 @@
 package hotelapp.gui;
 
-import javax.swing.*;
-import javax.swing.border.*;
+import hotelapp.model.*;
+import hotelapp.service.DataManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.time.format.DateTimeFormatter;
-import hotelapp.model.*;
-import hotelapp.service.DataManager;
 import java.util.List;
+import javax.swing.*;
+import javax.swing.border.*;
 
-/**
- * BookingPage - list booking user; selectable card list; actions: Pay (PaymentForm), CheckIn, CheckOut, Back
- */
 public class BookingPage extends JFrame {
 
     private DashboardTamu parent;
     private Tamu tamu;
     private JPanel bookingCardsPanel;
-    private final Color cream = new Color(245,238,220);
-    private final Color navy = new Color(39,76,119);
-    private final Color darkRed = new Color(62,50,50);
-    private final Color brown = new Color(126,99,99);
+
+    // ===== samakan palette dengan DashboardTamu =====
+    private final Color hoverColor = Color.decode("#3E3232"); // c1
+    private final Color btnColor = Color.decode("#503C3C");   // c2
+    private final Color borderColor = Color.decode("#7E6363"); // c3
+    private final Color bgColor = Color.decode("#EEE4E1");    // bg
     private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd MMM yyyy");
 
     public BookingPage(DashboardTamu parent, Tamu tamu){
@@ -40,7 +39,7 @@ public class BookingPage extends JFrame {
 
         // HEADER
         JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(darkRed);
+        header.setBackground(btnColor);
         header.setPreferredSize(new Dimension(getWidth(), 56));
         JLabel title = new JLabel("Riwayat Booking");
         title.setForeground(Color.WHITE);
@@ -51,23 +50,25 @@ public class BookingPage extends JFrame {
 
         // BODY
         JPanel body = new JPanel();
-        body.setBackground(cream);
+        body.setBackground(bgColor);
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
         body.setBorder(BorderFactory.createEmptyBorder(12,12,12,12));
 
         bookingCardsPanel = new JPanel();
         bookingCardsPanel.setLayout(new BoxLayout(bookingCardsPanel, BoxLayout.Y_AXIS));
-        bookingCardsPanel.setBackground(cream);
+        bookingCardsPanel.setBackground(bgColor);
 
         JScrollPane sp = new JScrollPane(bookingCardsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         sp.setPreferredSize(new Dimension(780, 440));
+        sp.setBorder(BorderFactory.createEmptyBorder());
         body.add(sp);
 
         add(body, BorderLayout.CENTER);
 
         // FOOTER BUTTONS
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 12));
-        footer.setBackground(cream);
+        footer.setBackground(bgColor);
+
         RoundedButton btnPay = new RoundedButton("BAYAR");
         RoundedButton btnCheckIn = new RoundedButton("CHECK-IN");
         RoundedButton btnCheckOut = new RoundedButton("CHECK-OUT");
@@ -76,12 +77,13 @@ public class BookingPage extends JFrame {
         RoundedButton[] arr = {btnPay, btnCheckIn, btnCheckOut, btnBack};
         for(RoundedButton b : arr){
             b.setPreferredSize(new Dimension(120,38));
-            b.setBackground(navy);
+            b.setBackground(btnColor);
             b.setForeground(Color.WHITE);
-            b.setFont(new Font("Poppins", Font.BOLD, 12));
-            b.addMouseListener(new HoverEffect(b, navy));
+            b.addMouseListener(new DashboardTamu.HoverEffect(b, hoverColor));
             footer.add(b);
         }
+
+        add(footer, BorderLayout.SOUTH);
 
         // BUTTON ACTIONS
         btnPay.addActionListener(e -> {
@@ -92,7 +94,7 @@ public class BookingPage extends JFrame {
                 return;
             }
             new PaymentForm(sel, parent);
-            refresh(); // agar status payment terupdate
+            refresh();
             parent.refresh();
         });
 
@@ -126,8 +128,6 @@ public class BookingPage extends JFrame {
         });
 
         btnBack.addActionListener(e -> dispose());
-
-        add(footer, BorderLayout.SOUTH);
     }
 
     private Booking getSelectedBooking(){
@@ -158,7 +158,7 @@ public class BookingPage extends JFrame {
             JLabel none = new JLabel("Belum ada booking.");
             none.setFont(new Font("Poppins", Font.PLAIN, 14));
             JPanel wrap = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            wrap.setBackground(cream);
+            wrap.setBackground(bgColor);
             wrap.add(none);
             bookingCardsPanel.add(wrap);
         }
@@ -169,11 +169,10 @@ public class BookingPage extends JFrame {
     private JPanel bookingCard(Booking b){
         JPanel card = new JPanel(new BorderLayout());
         card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createCompoundBorder(new LineBorder(new Color(220,220,220),1,true), BorderFactory.createEmptyBorder(10,10,10,10)));
+        card.setBorder(BorderFactory.createCompoundBorder(new LineBorder(borderColor,1,true), BorderFactory.createEmptyBorder(10,10,10,10)));
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         card.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Header row
         String header = b.getId();
         String status;
         Color statusColor;
@@ -185,7 +184,7 @@ public class BookingPage extends JFrame {
             statusColor = new Color(34,139,34);
         } else {
             status = "[PENDING]";
-            statusColor = brown;
+            statusColor = btnColor;
         }
 
         JLabel lblHeader = new JLabel("<html><b>" + header + "</b></html>");
@@ -200,11 +199,9 @@ public class BookingPage extends JFrame {
         top.add(lblHeader, BorderLayout.WEST);
         top.add(lblStatus, BorderLayout.EAST);
 
-        // Details row
         String tipe = "Tipe Kamar: " + b.getKamar().getTipe() + " (" + b.getKamar().getNomor() + ")";
         String checkin = "Check-in: " + b.getCheckIn().format(dtf);
         String checkout = "Check-out: " + b.getCheckOut().format(dtf);
-
         String total;
         if(b.isPaid()){
             total = "Rp " + String.format("%.0f", b.getTotalHarga()) + " | Silahkan Check-In";
@@ -213,8 +210,7 @@ public class BookingPage extends JFrame {
         }
         if(b.isCheckedOut()){
             total = "Rp " + String.format("%.0f", b.getTotalHarga()) + " | Booking selesai";
-}
-
+        }
 
         JLabel lblTipe = new JLabel(tipe);
         JLabel lblCI = new JLabel(checkin);
@@ -260,30 +256,31 @@ public class BookingPage extends JFrame {
         return card;
     }
 
-    // ===== RoundedButton & HoverEffect =====
+    // ===== RoundedButton =====
     class RoundedButton extends JButton {
+        private int radius = 25;
         public RoundedButton(String text){
             super(text);
             setFocusPainted(false);
             setContentAreaFilled(false);
             setBorderPainted(false);
-            setOpaque(true);
+            setOpaque(false);
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            setFont(new Font("Poppins", Font.BOLD, 12));
         }
-        @Override protected void paintComponent(Graphics g){
+        @Override
+        protected void paintComponent(Graphics g){
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(getBackground());
-            g2.fillRoundRect(0,0,getWidth(),getHeight(),12,12);
-            super.paintComponent(g2);
+            g2.setColor(getModel().isPressed() ? getBackground().darker() : getBackground());
+            g2.fillRoundRect(0,0,getWidth(),getHeight(),radius,radius);
+            FontMetrics fm = g2.getFontMetrics();
+            String text = getText();
+            int x = (getWidth() - fm.stringWidth(text)) / 2;
+            int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
+            g2.setColor(getForeground());
+            g2.drawString(text, x, y);
             g2.dispose();
         }
-    }
-
-    class HoverEffect extends MouseAdapter{
-        private JButton btn; private Color base;
-        HoverEffect(JButton btn, Color base){ this.btn = btn; this.base = base; }
-        @Override public void mouseEntered(MouseEvent e){ btn.setBackground(base.darker()); }
-        @Override public void mouseExited(MouseEvent e){ btn.setBackground(base); }
     }
 }
